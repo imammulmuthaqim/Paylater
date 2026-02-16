@@ -913,7 +913,7 @@
             color: #0f172a;
         }
         
-        /* QRIS Section - BARU */
+        /* QRIS Section */
         .qris-section {
             margin-top: 1.5rem;
             padding-top: 1.5rem;
@@ -956,6 +956,8 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            max-height: 400px;
+            overflow-y: auto;
         }
         
         @media (min-width: 768px) {
@@ -1124,6 +1126,8 @@
             <li><a id="menuAdmin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5.5 20.5c.9-3 4.1-4 6.5-4s5.6 1 6.5 4"/></svg> Hanya Admin</a></li>
             <li><a id="menuBank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Bank</a></li>
             <li><a id="menuHistory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> History</a></li>
+            <!-- MENU BARU: Simulasi Kalkulasi -->
+            <li><a id="menuSimulasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5M17 12h-5M17 19h-5"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Simulasi Kalkulasi</a></li>
         </ul>
     </div>
     <div class="overlay" id="overlay"></div>
@@ -1131,7 +1135,7 @@
     <!-- Main Content -->
     <main class="container">
         <div class="filter-section">
-            <button class="filter-btn" data-filter="all">Semua</button>
+            <button class="filter-btn active" data-filter="all">Semua</button>
             <button class="filter-btn" data-filter="belum">Belum Lunas</button>
             <button class="filter-btn" data-filter="lunas">Lunas</button>
             <!-- FILTER BULAN INI -->
@@ -1166,7 +1170,7 @@
         </div>
     </div>
 
-    <!-- Modal Admin (Form + Data) -->
+    <!-- Modal Admin (Form + Data) - DENGAN PILIHAN BUNGA -->
     <div class="modal" id="adminModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1198,6 +1202,16 @@
                         <option value="12">12 Bulan</option>
                     </select>
                 </div>
+                
+                <!-- PILIHAN BUNGA BARU -->
+                <div class="form-group">
+                    <label>Biaya Bunga (% per hari)</label>
+                    <select id="bunga" required>
+                        <option value="0.18">0.18% per hari</option>
+                        <option value="0.17">0.17% per hari</option>
+                    </select>
+                </div>
+                
                 <div class="form-group">
                     <label>Nominal (Rp)</label>
                     <input type="number" id="nominal" placeholder="Contoh: 1000000" required>
@@ -1209,7 +1223,7 @@
                         <span id="previewPokok">Rp 0</span>
                     </div>
                     <div class="preview-item">
-                        <span>Bunga (0,18%/hari)</span>
+                        <span>Bunga per bulan</span>
                         <span id="previewBunga">Rp 0</span>
                     </div>
                     <hr>
@@ -1262,10 +1276,10 @@
                 </div>
             </div>
             
-            <!-- QRIS Section - BARU -->
+            <!-- QRIS Section -->
             <div class="qris-section">
                 <h4>QRIS Pembayaran</h4>
-                <img src="qris.jpg" alt="QRIS" class="qris-image" id="qrisImage" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400?text=QRIS+Not+Found';">
+                <img src="Qris.jpg" alt="QRIS" class="qris-image" id="qrisImage" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400?text=QRIS+Not+Found';">
                 <div class="qris-actions">
                     <button class="btn-submit" onclick="downloadQRIS()">Download QRIS</button>
                 </div>
@@ -1274,15 +1288,59 @@
         </div>
     </div>
 
-    <!-- Modal History -->
+    <!-- Modal History (FIXED - BENAR) -->
     <div class="modal" id="historyModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Riwayat Lunas</h2>
+                <h2>Riwayat Pembayaran Lunas</h2>
                 <button class="close-modal" id="closeHistoryModal">&times;</button>
             </div>
             <div id="historyList" class="history-list">
-                <!-- Data history akan diisi JS -->
+                <!-- Akan diisi dari Firebase -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BARU: Simulasi Kalkulasi -->
+    <div class="modal" id="simulasiModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Simulasi Kalkulasi Cicilan</h2>
+                <button class="close-modal" id="closeSimulasiModal">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Nominal (Rp)</label>
+                <input type="number" id="simulasiNominal" class="password-input" placeholder="Contoh: 1000000" value="1000000">
+            </div>
+            
+            <div class="form-group">
+                <label>Tenor (Bulan)</label>
+                <select id="simulasiTenor" class="password-input">
+                    <option value="1">1 Bulan</option>
+                    <option value="3" selected>3 Bulan</option>
+                    <option value="6">6 Bulan</option>
+                    <option value="9">9 Bulan</option>
+                    <option value="12">12 Bulan</option>
+                </select>
+            </div>
+            
+            <button class="btn-password" onclick="hitungSimulasi()">Hitung</button>
+            
+            <div id="simulasiHasil" class="preview-box" style="margin-top: 1.5rem; display: none;">
+                <div class="preview-item">
+                    <span>Pokok per bulan</span>
+                    <span id="simulasiPokok">Rp 0</span>
+                </div>
+                <hr>
+                <div class="preview-item total">
+                    <span>Total per bulan</span>
+                    <span id="simulasiTotal">Rp 0</span>
+                </div>
+                <div class="preview-item">
+                    <span>Total semua</span>
+                    <span id="simulasiTotalSemua">Rp 0</span>
+                </div>
             </div>
         </div>
     </div>
@@ -1326,15 +1384,18 @@
         const adminModal = document.getElementById('adminModal');
         const bankModal = document.getElementById('bankModal');
         const historyModal = document.getElementById('historyModal');
+        const simulasiModal = document.getElementById('simulasiModal');
         const closePasswordModal = document.getElementById('closePasswordModal');
         const closeAdminModal = document.getElementById('closeAdminModal');
         const closeBankModal = document.getElementById('closeBankModal');
         const closeHistoryModal = document.getElementById('closeHistoryModal');
+        const closeSimulasiModal = document.getElementById('closeSimulasiModal');
         
         // Form elements
         const namaInput = document.getElementById('nama');
         const deskripsiInput = document.getElementById('deskripsi');
         const tenorSelect = document.getElementById('tenor');
+        const bungaSelect = document.getElementById('bunga'); // BARU
         const nominalInput = document.getElementById('nominal');
         const previewPokok = document.getElementById('previewPokok');
         const previewBunga = document.getElementById('previewBunga');
@@ -1344,6 +1405,14 @@
         const adminDataList = document.getElementById('adminDataList');
 
         const toast = document.getElementById('toast');
+
+        // Simulasi elements
+        const simulasiNominal = document.getElementById('simulasiNominal');
+        const simulasiTenor = document.getElementById('simulasiTenor');
+        const simulasiHasil = document.getElementById('simulasiHasil');
+        const simulasiPokok = document.getElementById('simulasiPokok');
+        const simulasiTotal = document.getElementById('simulasiTotal');
+        const simulasiTotalSemua = document.getElementById('simulasiTotalSemua');
 
         // Helper: Generate nama bulan
         function getMonthName(monthsFromNow = 0) {
@@ -1358,11 +1427,19 @@
             return date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
         }
 
-        // Hitung bunga 0.18% per hari
-        function calculateBunga(nominal, tenorBulan) {
+        // Helper: Parse bulan Indonesia ke angka
+        function monthNameToNumber(monthName) {
+            const monthMap = {
+                'Januari': 0, 'Februari': 1, 'Maret': 2, 'April': 3, 'Mei': 4, 'Juni': 5,
+                'Juli': 6, 'Agustus': 7, 'September': 8, 'Oktober': 9, 'November': 10, 'Desember': 11
+            };
+            return monthMap[monthName] || 0;
+        }
+
+        // Hitung bunga dengan parameter bunga yang dipilih
+        function calculateBunga(nominal, tenorBulan, bungaPerHari) {
             const hari = tenorBulan * 30;
-            const bungaPerHari = 0.18 / 100;
-            const totalBunga = nominal * bungaPerHari * hari;
+            const totalBunga = nominal * (bungaPerHari / 100) * hari;
             const pokokPerBulan = nominal / tenorBulan;
             const bungaPerBulan = totalBunga / tenorBulan;
             const totalPerBulan = pokokPerBulan + bungaPerBulan;
@@ -1377,14 +1454,17 @@
         }
 
         // Generate array cicilan per bulan
-        function generateInstallments(tenor, startMonth = 0) {
+        function generateInstallments(tenor, bungaPerHari, nominal, startMonth = 0) {
             const installments = [];
+            const calc = calculateBunga(nominal, tenor, bungaPerHari);
+            
             for (let i = 0; i < tenor; i++) {
                 const monthName = getMonthName(i + 1);
                 installments.push({
                     month: i + 1,
                     monthName: monthName,
                     status: 'belum',
+                    amount: calc.totalPerBulan, // Jumlah yang harus dibayar per bulan
                     dueDate: new Date(new Date().getFullYear(), new Date().getMonth() + i + 1, 28)
                 });
             }
@@ -1412,10 +1492,11 @@
             return count;
         }
 
-        // Update preview
+        // Update preview di form admin
         function updatePreview() {
             const nominal = parseFloat(nominalInput.value) || 0;
             const tenor = parseInt(tenorSelect.value) || 1;
+            const bunga = parseFloat(bungaSelect.value) || 0.18;
             
             if (nominal <= 0 || tenor <= 0) {
                 previewPokok.innerText = 'Rp 0';
@@ -1425,7 +1506,7 @@
                 return;
             }
             
-            const calc = calculateBunga(nominal, tenor);
+            const calc = calculateBunga(nominal, tenor, bunga);
             
             previewPokok.innerText = `Rp ${Math.round(calc.pokokPerBulan).toLocaleString('id-ID')}`;
             previewBunga.innerText = `Rp ${Math.round(calc.bungaPerBulan).toLocaleString('id-ID')}`;
@@ -1435,6 +1516,27 @@
 
         tenorSelect.addEventListener('change', updatePreview);
         nominalInput.addEventListener('input', updatePreview);
+        bungaSelect.addEventListener('change', updatePreview);
+
+        // Fungsi hitung simulasi
+        window.hitungSimulasi = function() {
+            const nominal = parseFloat(simulasiNominal.value) || 0;
+            const tenor = parseInt(simulasiTenor.value) || 1;
+            
+            if (nominal <= 0) {
+                alert('Masukkan nominal yang valid');
+                return;
+            }
+            
+            // Pake bunga default 0.18% untuk simulasi (sesuai permintaan)
+            const calc = calculateBunga(nominal, tenor, 0.18);
+            
+            simulasiPokok.innerText = `Rp ${Math.round(calc.pokokPerBulan).toLocaleString('id-ID')}`;
+            simulasiTotal.innerText = `Rp ${Math.round(calc.totalPerBulan).toLocaleString('id-ID')}`;
+            simulasiTotalSemua.innerText = `Rp ${Math.round(calc.totalSemua).toLocaleString('id-ID')}`;
+            
+            simulasiHasil.style.display = 'block';
+        };
 
         // Toggle sidebar
         menuToggle.addEventListener('click', () => {
@@ -1470,8 +1572,17 @@
 
         document.getElementById('menuHistory').addEventListener('click', () => {
             closeSidebarFunc();
-            loadHistory();
+            loadHistory(); // Panggil fungsi history yang baru
             historyModal.classList.add('active');
+        });
+
+        // Menu Simulasi (baru)
+        document.getElementById('menuSimulasi').addEventListener('click', () => {
+            closeSidebarFunc();
+            simulasiNominal.value = '1000000';
+            simulasiTenor.value = '3';
+            simulasiHasil.style.display = 'none';
+            simulasiModal.classList.add('active');
         });
 
         // Close modals
@@ -1479,12 +1590,14 @@
         closeAdminModal.addEventListener('click', () => adminModal.classList.remove('active'));
         closeBankModal.addEventListener('click', () => bankModal.classList.remove('active'));
         closeHistoryModal.addEventListener('click', () => historyModal.classList.remove('active'));
+        closeSimulasiModal.addEventListener('click', () => simulasiModal.classList.remove('active'));
 
         window.addEventListener('click', (e) => {
             if (e.target === passwordModal) passwordModal.classList.remove('active');
             if (e.target === adminModal) adminModal.classList.remove('active');
             if (e.target === bankModal) bankModal.classList.remove('active');
             if (e.target === historyModal) historyModal.classList.remove('active');
+            if (e.target === simulasiModal) simulasiModal.classList.remove('active');
         });
 
         // Check password
@@ -1512,7 +1625,7 @@
             });
         });
 
-        // Fungsi download QRIS - BARU
+        // Fungsi download QRIS
         window.downloadQRIS = function() {
             const link = document.createElement('a');
             link.href = 'Qris.jpg';
@@ -1526,7 +1639,7 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         };
 
-        // Filter functionality (DENGAN FILTER BULAN INI)
+        // Filter functionality
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 filterBtns.forEach(b => b.classList.remove('active'));
@@ -1546,13 +1659,14 @@
             });
         });
 
-        // Save data ke Firebase
+        // Save data ke Firebase (DENGAN BUNGA)
         adminForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const nama = namaInput.value.trim();
             const deskripsi = deskripsiInput.value.trim();
             const tenor = parseInt(tenorSelect.value);
+            const bunga = parseFloat(bungaSelect.value);
             const nominal = parseFloat(nominalInput.value);
             
             if (!nama || !deskripsi || nominal <= 0) {
@@ -1560,8 +1674,8 @@
                 return;
             }
             
-            const calc = calculateBunga(nominal, tenor);
-            const installments = generateInstallments(tenor);
+            const calc = calculateBunga(nominal, tenor, bunga);
+            const installments = generateInstallments(tenor, bunga, nominal);
             
             const allLunas = installments.every(inst => inst.status === 'lunas');
             
@@ -1569,6 +1683,7 @@
                 nama,
                 deskripsi,
                 tenor,
+                bunga, // Simpan bunga yang dipilih
                 nominal,
                 pokokPerBulan: calc.pokokPerBulan,
                 bungaPerBulan: calc.bungaPerBulan,
@@ -1618,7 +1733,7 @@
             }
         }
 
-        // Render cards untuk halaman utama (DENGAN FILTER BULAN INI)
+        // Render cards untuk halaman utama
         function renderCards() {
             let filtered = transactions;
             
@@ -1652,7 +1767,7 @@
                     if (inst.status === 'lunas') {
                         badgeClass = 'lunas';
                     } else if (isDueThisMonth(inst)) {
-                        badgeClass = 'due-this-month'; // Highlight merah/oranye
+                        badgeClass = 'due-this-month'; // Highlight oranye
                     } else if (inst.month === activeMonth) {
                         badgeClass = 'active';
                     }
@@ -1757,6 +1872,10 @@
                                     <span class="value">${t.tenor} bulan</span>
                                 </div>
                                 <div class="detail-item">
+                                    <span class="label">Bunga</span>
+                                    <span class="value">${t.bunga || 0.18}% / hari</span>
+                                </div>
+                                <div class="detail-item">
                                     <span class="label">Total per bulan</span>
                                     <span class="value">Rp ${Math.round(t.totalPerBulan).toLocaleString('id-ID')}</span>
                                 </div>
@@ -1801,38 +1920,68 @@
             }
         };
 
-        // Load history
+        // FUNGSI HISTORY YANG BARU (Berdasarkan cicilan yang lunas)
         async function loadHistory() {
             try {
-                const snapshot = await db.collection('transactions')
-                    .where('status', '==', 'lunas')
-                    .get();
+                // Ambil semua transaksi
+                const snapshot = await db.collection('transactions').get();
                 
-                const lunasData = snapshot.docs.map(doc => doc.data());
+                if (snapshot.empty) {
+                    document.getElementById('historyList').innerHTML = '<div class="empty-state">Belum ada data transaksi</div>';
+                    return;
+                }
                 
-                const grouped = {};
-                lunasData.forEach(item => {
-                    const bulan = item.bulanMulai || 'Unknown';
-                    if (!grouped[bulan]) grouped[bulan] = 0;
-                    grouped[bulan] += item.totalSemua || 0;
+                // Object untuk menyimpan total per bulan
+                const monthlyTotals = {};
+                
+                // Loop setiap transaksi
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // Jika ada installments
+                    if (data.installments && Array.isArray(data.installments)) {
+                        // Loop setiap cicilan
+                        data.installments.forEach(inst => {
+                            // Jika cicilan ini statusnya lunas
+                            if (inst.status === 'lunas') {
+                                const bulan = inst.monthName; // Nama bulan cicilan ini
+                                
+                                if (!monthlyTotals[bulan]) {
+                                    monthlyTotals[bulan] = 0;
+                                }
+                                
+                                // Tambahkan jumlah cicilan ini ke total bulan tersebut
+                                monthlyTotals[bulan] += inst.amount || data.totalPerBulan || 0;
+                            }
+                        });
+                    }
                 });
                 
                 const historyList = document.getElementById('historyList');
                 
-                if (Object.keys(grouped).length === 0) {
-                    historyList.innerHTML = '<div class="empty-state">Belum ada transaksi lunas</div>';
+                if (Object.keys(monthlyTotals).length === 0) {
+                    historyList.innerHTML = '<div class="empty-state">Belum ada cicilan yang lunas</div>';
                     return;
                 }
                 
-                historyList.innerHTML = Object.entries(grouped)
-                    .sort((a, b) => b[0].localeCompare(a[0]))
-                    .map(([bulan, total]) => `
-                        <div class="history-item">
-                            <span class="history-month">${bulan}</span>
-                            <span class="history-total">Rp ${Math.round(total).toLocaleString('id-ID')}</span>
-                        </div>
-                    `).join('');
+                // Urutkan bulan dari yang terbaru
+                const sortedMonths = Object.keys(monthlyTotals).sort((a, b) => {
+                    const [monthA, yearA] = a.split(' ');
+                    const [monthB, yearB] = b.split(' ');
                     
+                    const dateA = new Date(parseInt(yearA), monthNameToNumber(monthA));
+                    const dateB = new Date(parseInt(yearB), monthNameToNumber(monthB));
+                    
+                    return dateB - dateA; // Descending (terbaru dulu)
+                });
+                
+                historyList.innerHTML = sortedMonths.map(bulan => `
+                    <div class="history-item">
+                        <span class="history-month">${bulan}</span>
+                        <span class="history-total">Rp ${Math.round(monthlyTotals[bulan]).toLocaleString('id-ID')}</span>
+                    </div>
+                `).join('');
+                
             } catch (error) {
                 console.error('Error loading history: ', error);
                 document.getElementById('historyList').innerHTML = 
