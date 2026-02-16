@@ -460,6 +460,8 @@
             color: #334155;
             border-left: 3px solid #3b82f6;
             word-break: break-word;
+            max-height: 120px;
+            overflow-y: auto;
         }
         
         @media (min-width: 768px) {
@@ -1062,6 +1064,54 @@
             color: #059669;
         }
         
+        /* Total PayLater List */
+        .total-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .total-item {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 1rem;
+            border: 1px solid #e9eef2;
+        }
+        
+        .total-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+        
+        .total-detail {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+        
+        .total-detail .value {
+            font-weight: 600;
+            color: #2563eb;
+        }
+        
+        .grand-total {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #0f172a;
+            color: white;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+        
         .empty-state {
             text-align: center;
             padding: 2rem 1rem;
@@ -1196,6 +1246,8 @@
             <li><a id="menuHistory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> History</a></li>
             <!-- MENU SIMULASI KALKULASI -->
             <li><a id="menuSimulasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5M17 12h-5M17 19h-5"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Simulasi Kalkulasi</a></li>
+            <!-- MENU TOTAL PAYLATER - BARU -->
+            <li><a id="menuTotal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5M17 12h-5M17 19h-5"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Total PayLater</a></li>
         </ul>
     </div>
     <div class="overlay" id="overlay"></div>
@@ -1238,7 +1290,7 @@
         </div>
     </div>
 
-    <!-- Modal Admin (Form + Data) - DENGAN RANGE BUNGA 0.1% - 0.18% -->
+    <!-- Modal Admin (Form + Data) - DENGAN RANGE BUNGA 0.00% - 0.18% -->
     <div class="modal" id="adminModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1271,13 +1323,14 @@
                     </select>
                 </div>
                 
-                <!-- RANGE BUNGA 0.1% - 0.18% -->
+                <!-- RANGE BUNGA 0.00% - 0.18% -->
                 <div class="form-group">
                     <label>Biaya Bunga (% per hari)</label>
                     <div class="range-container">
-                        <input type="range" id="bunga" class="range-input" min="0.10" max="0.18" step="0.01" value="0.18">
+                        <input type="range" id="bunga" class="range-input" min="0.00" max="0.18" step="0.01" value="0.18">
                         <span id="bungaValue" class="range-value">0.18%</span>
                     </div>
+                    <small style="color: #64748b; display: block; margin-top: 0.25rem;">0.00% = tanpa bunga</small>
                 </div>
                 
                 <div class="form-group">
@@ -1413,6 +1466,19 @@
         </div>
     </div>
 
+    <!-- MODAL TOTAL PAYLATER - BARU -->
+    <div class="modal" id="totalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Total Tagihan Belum Lunas</h2>
+                <button class="close-modal" id="closeTotalModal">&times;</button>
+            </div>
+            <div id="totalList" class="total-list">
+                <!-- Akan diisi JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast" id="toast">Tersalin!</div>
 
@@ -1453,11 +1519,13 @@
         const bankModal = document.getElementById('bankModal');
         const historyModal = document.getElementById('historyModal');
         const simulasiModal = document.getElementById('simulasiModal');
+        const totalModal = document.getElementById('totalModal'); // BARU
         const closePasswordModal = document.getElementById('closePasswordModal');
         const closeAdminModal = document.getElementById('closeAdminModal');
         const closeBankModal = document.getElementById('closeBankModal');
         const closeHistoryModal = document.getElementById('closeHistoryModal');
         const closeSimulasiModal = document.getElementById('closeSimulasiModal');
+        const closeTotalModal = document.getElementById('closeTotalModal'); // BARU
         
         // Form elements
         const namaInput = document.getElementById('nama');
@@ -1561,11 +1629,34 @@
             return count;
         }
 
+        // Hitung total tagihan per orang (sisa bulan yang belum dibayar)
+        function calculateTotalPerPerson(transactions) {
+            const totals = {};
+            let grandTotal = 0;
+            
+            transactions.forEach(t => {
+                if (t.status === 'belum' && t.installments) {
+                    const sisaCicilan = t.installments.filter(inst => inst.status === 'belum').length;
+                    const totalSisa = sisaCicilan * (t.totalPerBulan || 0);
+                    
+                    if (totalSisa > 0) {
+                        if (!totals[t.nama]) {
+                            totals[t.nama] = 0;
+                        }
+                        totals[t.nama] += totalSisa;
+                        grandTotal += totalSisa;
+                    }
+                }
+            });
+            
+            return { totals, grandTotal };
+        }
+
         // Update preview di form admin
         function updatePreview() {
             const nominal = parseFloat(nominalInput.value) || 0;
             const tenor = parseInt(tenorSelect.value) || 1;
-            const bunga = parseFloat(bungaInput.value) || 0.18;
+            const bunga = parseFloat(bungaInput.value) || 0.00;
             
             if (nominal <= 0 || tenor <= 0) {
                 previewPokok.innerText = 'Rp 0';
@@ -1658,12 +1749,20 @@
             simulasiModal.classList.add('active');
         });
 
+        // Menu Total PayLater - BARU
+        document.getElementById('menuTotal').addEventListener('click', () => {
+            closeSidebarFunc();
+            loadTotalPayLater();
+            totalModal.classList.add('active');
+        });
+
         // Close modals
         closePasswordModal.addEventListener('click', () => passwordModal.classList.remove('active'));
         closeAdminModal.addEventListener('click', () => adminModal.classList.remove('active'));
         closeBankModal.addEventListener('click', () => bankModal.classList.remove('active'));
         closeHistoryModal.addEventListener('click', () => historyModal.classList.remove('active'));
         closeSimulasiModal.addEventListener('click', () => simulasiModal.classList.remove('active'));
+        closeTotalModal.addEventListener('click', () => totalModal.classList.remove('active')); // BARU
 
         window.addEventListener('click', (e) => {
             if (e.target === passwordModal) passwordModal.classList.remove('active');
@@ -1671,6 +1770,7 @@
             if (e.target === bankModal) bankModal.classList.remove('active');
             if (e.target === historyModal) historyModal.classList.remove('active');
             if (e.target === simulasiModal) simulasiModal.classList.remove('active');
+            if (e.target === totalModal) totalModal.classList.remove('active'); // BARU
         });
 
         // Check password
@@ -1732,7 +1832,7 @@
             });
         });
 
-        // Save data ke Firebase (DENGAN RANGE BUNGA)
+        // Save data ke Firebase (DENGAN RANGE BUNGA 0.00% - 0.18%)
         adminForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -2047,6 +2147,50 @@
             } catch (error) {
                 console.error('Error loading history: ', error);
                 document.getElementById('historyList').innerHTML = 
+                    `<div class="empty-state">Error: ${error.message}</div>`;
+            }
+        }
+
+        // FUNGSI TOTAL PAYLATER - BARU
+        async function loadTotalPayLater() {
+            try {
+                const snapshot = await db.collection('transactions').get();
+                
+                if (snapshot.empty) {
+                    document.getElementById('totalList').innerHTML = '<div class="empty-state">Belum ada data transaksi</div>';
+                    return;
+                }
+                
+                const transactions = snapshot.docs.map(doc => doc.data());
+                const { totals, grandTotal } = calculateTotalPerPerson(transactions);
+                
+                const totalList = document.getElementById('totalList');
+                
+                if (Object.keys(totals).length === 0) {
+                    totalList.innerHTML = '<div class="empty-state">Tidak ada tagihan yang belum lunas</div>';
+                    return;
+                }
+                
+                const sortedNames = Object.keys(totals).sort();
+                
+                totalList.innerHTML = sortedNames.map(nama => `
+                    <div class="total-item">
+                        <div class="total-name">${nama}</div>
+                        <div class="total-detail">
+                            <span>Total tagihan</span>
+                            <span class="value">Rp ${Math.round(totals[nama]).toLocaleString('id-ID')}</span>
+                        </div>
+                    </div>
+                `).join('') + `
+                    <div class="grand-total">
+                        <span>Total Keseluruhan</span>
+                        <span>Rp ${Math.round(grandTotal).toLocaleString('id-ID')}</span>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading total: ', error);
+                document.getElementById('totalList').innerHTML = 
                     `<div class="empty-state">Error: ${error.message}</div>`;
             }
         }
