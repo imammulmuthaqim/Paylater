@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>PayLater • Sistem Cicilan</title>
     
     <!-- Firebase SDK -->
@@ -306,7 +306,7 @@
             margin-left: 0.3rem;
         }
         
-        /* Cards Grid - Responsive */
+        /* Cards Grid - Responsive dengan breakpoints yang lebih baik */
         .cards-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -314,17 +314,35 @@
             margin-top: 1rem;
         }
         
-        @media (min-width: 640px) {
+        /* Mobile (di bawah 480px) - 1 kolom */
+        @media (min-width: 480px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+        
+        /* Tablet (768px ke atas) - 2 kolom */
+        @media (min-width: 768px) {
             .cards-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 1.25rem;
             }
         }
         
+        /* Desktop kecil (1024px ke atas) - 3 kolom */
         @media (min-width: 1024px) {
             .cards-grid {
                 grid-template-columns: repeat(3, 1fr);
                 gap: 1.5rem;
+            }
+        }
+        
+        /* Desktop besar (1440px ke atas) - 4 kolom */
+        @media (min-width: 1440px) {
+            .cards-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1.75rem;
             }
         }
         
@@ -365,15 +383,24 @@
         
         .card-header {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.75rem;
             margin-bottom: 0.75rem;
+        }
+        
+        @media (min-width: 480px) {
+            .card-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
         }
         
         .card-header h3 {
             font-size: 1rem;
             font-weight: 600;
             color: #0f172a;
+            word-break: break-word;
         }
         
         @media (min-width: 768px) {
@@ -389,6 +416,14 @@
             font-weight: 600;
             letter-spacing: 0.3px;
             white-space: nowrap;
+            display: inline-block;
+            width: fit-content;
+        }
+        
+        @media (min-width: 480px) {
+            .badge {
+                align-self: flex-start;
+            }
         }
         
         @media (min-width: 768px) {
@@ -683,6 +718,39 @@
         .form-group textarea {
             min-height: 80px;
             resize: vertical;
+        }
+        
+        /* Range input untuk bunga */
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .range-input {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #e2e8f0;
+            border-radius: 10px;
+            outline: none;
+        }
+        
+        .range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .range-value {
+            min-width: 70px;
+            font-weight: 600;
+            color: #3b82f6;
         }
         
         /* Password Modal */
@@ -1126,7 +1194,7 @@
             <li><a id="menuAdmin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5.5 20.5c.9-3 4.1-4 6.5-4s5.6 1 6.5 4"/></svg> Hanya Admin</a></li>
             <li><a id="menuBank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Bank</a></li>
             <li><a id="menuHistory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> History</a></li>
-            <!-- MENU BARU: Simulasi Kalkulasi -->
+            <!-- MENU SIMULASI KALKULASI -->
             <li><a id="menuSimulasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5M17 12h-5M17 19h-5"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Simulasi Kalkulasi</a></li>
         </ul>
     </div>
@@ -1170,7 +1238,7 @@
         </div>
     </div>
 
-    <!-- Modal Admin (Form + Data) - DENGAN PILIHAN BUNGA -->
+    <!-- Modal Admin (Form + Data) - DENGAN RANGE BUNGA 0.1% - 0.18% -->
     <div class="modal" id="adminModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1203,13 +1271,13 @@
                     </select>
                 </div>
                 
-                <!-- PILIHAN BUNGA BARU -->
+                <!-- RANGE BUNGA 0.1% - 0.18% -->
                 <div class="form-group">
                     <label>Biaya Bunga (% per hari)</label>
-                    <select id="bunga" required>
-                        <option value="0.18">0.18% per hari</option>
-                        <option value="0.17">0.17% per hari</option>
-                    </select>
+                    <div class="range-container">
+                        <input type="range" id="bunga" class="range-input" min="0.10" max="0.18" step="0.01" value="0.18">
+                        <span id="bungaValue" class="range-value">0.18%</span>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -1301,7 +1369,7 @@
         </div>
     </div>
 
-    <!-- MODAL BARU: Simulasi Kalkulasi -->
+    <!-- MODAL SIMULASI KALKULASI -->
     <div class="modal" id="simulasiModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1395,7 +1463,8 @@
         const namaInput = document.getElementById('nama');
         const deskripsiInput = document.getElementById('deskripsi');
         const tenorSelect = document.getElementById('tenor');
-        const bungaSelect = document.getElementById('bunga'); // BARU
+        const bungaInput = document.getElementById('bunga');
+        const bungaValue = document.getElementById('bungaValue');
         const nominalInput = document.getElementById('nominal');
         const previewPokok = document.getElementById('previewPokok');
         const previewBunga = document.getElementById('previewBunga');
@@ -1464,7 +1533,7 @@
                     month: i + 1,
                     monthName: monthName,
                     status: 'belum',
-                    amount: calc.totalPerBulan, // Jumlah yang harus dibayar per bulan
+                    amount: calc.totalPerBulan,
                     dueDate: new Date(new Date().getFullYear(), new Date().getMonth() + i + 1, 28)
                 });
             }
@@ -1496,7 +1565,7 @@
         function updatePreview() {
             const nominal = parseFloat(nominalInput.value) || 0;
             const tenor = parseInt(tenorSelect.value) || 1;
-            const bunga = parseFloat(bungaSelect.value) || 0.18;
+            const bunga = parseFloat(bungaInput.value) || 0.18;
             
             if (nominal <= 0 || tenor <= 0) {
                 previewPokok.innerText = 'Rp 0';
@@ -1512,11 +1581,15 @@
             previewBunga.innerText = `Rp ${Math.round(calc.bungaPerBulan).toLocaleString('id-ID')}`;
             previewTotal.innerText = `Rp ${Math.round(calc.totalPerBulan).toLocaleString('id-ID')}`;
             previewTotalSemua.innerText = `Rp ${Math.round(calc.totalSemua).toLocaleString('id-ID')}`;
+            
+            // Update nilai bunga yang ditampilkan
+            bungaValue.innerText = bunga.toFixed(2) + '%';
         }
 
+        // Event listeners untuk range bunga
+        bungaInput.addEventListener('input', updatePreview);
         tenorSelect.addEventListener('change', updatePreview);
         nominalInput.addEventListener('input', updatePreview);
-        bungaSelect.addEventListener('change', updatePreview);
 
         // Fungsi hitung simulasi
         window.hitungSimulasi = function() {
@@ -1572,11 +1645,11 @@
 
         document.getElementById('menuHistory').addEventListener('click', () => {
             closeSidebarFunc();
-            loadHistory(); // Panggil fungsi history yang baru
+            loadHistory();
             historyModal.classList.add('active');
         });
 
-        // Menu Simulasi (baru)
+        // Menu Simulasi
         document.getElementById('menuSimulasi').addEventListener('click', () => {
             closeSidebarFunc();
             simulasiNominal.value = '1000000';
@@ -1659,14 +1732,14 @@
             });
         });
 
-        // Save data ke Firebase (DENGAN BUNGA)
+        // Save data ke Firebase (DENGAN RANGE BUNGA)
         adminForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const nama = namaInput.value.trim();
             const deskripsi = deskripsiInput.value.trim();
             const tenor = parseInt(tenorSelect.value);
-            const bunga = parseFloat(bungaSelect.value);
+            const bunga = parseFloat(bungaInput.value);
             const nominal = parseFloat(nominalInput.value);
             
             if (!nama || !deskripsi || nominal <= 0) {
@@ -1683,7 +1756,7 @@
                 nama,
                 deskripsi,
                 tenor,
-                bunga, // Simpan bunga yang dipilih
+                bunga,
                 nominal,
                 pokokPerBulan: calc.pokokPerBulan,
                 bungaPerBulan: calc.bungaPerBulan,
@@ -1742,7 +1815,6 @@
             } else if (currentFilter === 'belum') {
                 filtered = transactions.filter(t => t.status === 'belum');
             } else if (currentFilter === 'thisMonth') {
-                // Filter khusus: transaksi yang memiliki cicilan jatuh tempo bulan ini
                 filtered = transactions.filter(t => {
                     if (t.status === 'lunas') return false;
                     return t.installments?.some(inst => isDueThisMonth(inst));
@@ -1759,7 +1831,6 @@
                 const activeMonth = activeInstallment?.month || 1;
                 const totalMonths = t.tenor;
                 
-                // Cek apakah ada cicilan yang jatuh tempo bulan ini
                 const hasThisMonthDue = t.installments?.some(inst => isDueThisMonth(inst));
                 
                 const installmentBadges = t.installments?.map(inst => {
@@ -1767,7 +1838,7 @@
                     if (inst.status === 'lunas') {
                         badgeClass = 'lunas';
                     } else if (isDueThisMonth(inst)) {
-                        badgeClass = 'due-this-month'; // Highlight oranye
+                        badgeClass = 'due-this-month';
                     } else if (inst.month === activeMonth) {
                         badgeClass = 'active';
                     }
@@ -1788,7 +1859,6 @@
                             </span>
                         </div>
                         
-                        <!-- DESKRIPSI BARANG -->
                         <div class="item-description">
                             <i class="fas fa-box" style="margin-right: 0.5rem; opacity: 0.7;"></i>
                             ${t.deskripsi || 'Tidak ada deskripsi'}
@@ -1920,10 +1990,9 @@
             }
         };
 
-        // FUNGSI HISTORY YANG BARU (Berdasarkan cicilan yang lunas)
+        // FUNGSI HISTORY (Berdasarkan cicilan yang lunas)
         async function loadHistory() {
             try {
-                // Ambil semua transaksi
                 const snapshot = await db.collection('transactions').get();
                 
                 if (snapshot.empty) {
@@ -1931,26 +2000,20 @@
                     return;
                 }
                 
-                // Object untuk menyimpan total per bulan
                 const monthlyTotals = {};
                 
-                // Loop setiap transaksi
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     
-                    // Jika ada installments
                     if (data.installments && Array.isArray(data.installments)) {
-                        // Loop setiap cicilan
                         data.installments.forEach(inst => {
-                            // Jika cicilan ini statusnya lunas
                             if (inst.status === 'lunas') {
-                                const bulan = inst.monthName; // Nama bulan cicilan ini
+                                const bulan = inst.monthName;
                                 
                                 if (!monthlyTotals[bulan]) {
                                     monthlyTotals[bulan] = 0;
                                 }
                                 
-                                // Tambahkan jumlah cicilan ini ke total bulan tersebut
                                 monthlyTotals[bulan] += inst.amount || data.totalPerBulan || 0;
                             }
                         });
@@ -1964,7 +2027,6 @@
                     return;
                 }
                 
-                // Urutkan bulan dari yang terbaru
                 const sortedMonths = Object.keys(monthlyTotals).sort((a, b) => {
                     const [monthA, yearA] = a.split(' ');
                     const [monthB, yearB] = b.split(' ');
@@ -1972,7 +2034,7 @@
                     const dateA = new Date(parseInt(yearA), monthNameToNumber(monthA));
                     const dateB = new Date(parseInt(yearB), monthNameToNumber(monthB));
                     
-                    return dateB - dateA; // Descending (terbaru dulu)
+                    return dateB - dateA;
                 });
                 
                 historyList.innerHTML = sortedMonths.map(bulan => `
